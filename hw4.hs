@@ -1,3 +1,4 @@
+import Data.List
 -- 1
 -- Conversion to wholemeal programming
 
@@ -62,7 +63,30 @@ xor = foldr f False
         f True True = False
 
 -- implement map with foldr
+map' :: (a -> b) -> [a] -> [b]
+map' f = foldr (\x y -> f x : y) []
+
+-- implement foldr with foldl
 myfoldl :: Foldable t => (b -> a -> b) -> b -> t a -> b
 myfoldl f base xs = foldr (\x y t -> y (f t x)) id xs base
 
 -- Exercise 4 : Finding primes
+-- given n, generate odd primes number up to 2n + 2.
+
+removeUnwanted :: Integer -> [Integer]
+removeUnwanted n = filter (`notElem` unwanted) [1..n]
+  where unwanted = [k | k <- [1..n], i <- [1..n], j <- [i..n], (i + j + 2 * i * j) <= n, (i + j + 2 * i * j) == k]
+
+sieveSundaram' :: Integer -> [Integer]
+sieveSundaram' n = map (\x -> 2 * x + 1) (removeUnwanted n)
+
+-- another appraoch
+sieveSundaram :: Integer -> [Integer]
+sieveSundaram n = map ((+ 1 ) . (* 2)) $ [1..n] \\ matches
+  where matches = map (\(i,j) -> i + j + 2 * i * j) $
+                  filter (\(i,j) -> i + j + 2 * i * j <= n) $
+                  cartProd [1..n] [1..n]
+
+
+cartProd :: [a] -> [b] -> [(a,b)]
+cartProd xs ys = [(x,y) | x <- xs, y <- ys]
