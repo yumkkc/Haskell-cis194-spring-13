@@ -52,6 +52,17 @@ insertToTree v (Node h lst v' rst) = Node h' lst' v' rst'
 foldTree :: [a] -> Tree a
 foldTree = foldr insertToTree Leaf
 
--- Node 3 (Node 2 (Node 1 (Node 0 Leaf 'D' Leaf) 'G' Leaf) 'I' (Node 1 (Node 0 Leaf 'A' Leaf) 'E' Leaf))
--- 'J'
--- (Node 2 (Node 1 (Node 0 Leaf 'B' Leaf) 'F' Leaf) 'H' (Node 0 Leaf 'C' Leaf))
+-- Exercise 3
+-- implement xor with flodr
+-- explaination : i make true when i find "True" but when i encounter another "True", its False since now its even
+xor :: [Bool] -> Bool
+xor = foldr f False
+  where f False b = b
+        f True False = True
+        f True True = False
+
+-- implement map with foldr
+myfoldl :: Foldable t => (b -> a -> b) -> b -> t a -> b
+myfoldl f base xs = foldr (\x y t -> y (f t x)) id xs base
+
+-- Exercise 4 : Finding primes
