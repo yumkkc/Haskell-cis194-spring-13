@@ -1,18 +1,21 @@
-import ExprT
+{-# LANGUAGE TypeSynonymInstances #-}
+
+-- import ExprT
 import Parser
+import StackVM
 
 -- Exercise 1
 
-eval ::  ExprT -> Integer
-eval (Lit v) = v
-eval (Add l r) = eval l + eval r
-eval (Mul l r) = eval l * eval r
+-- eval ::  ExprT -> Integer
+-- eval (Lit v) = v
+-- eval (Add l r) = eval l + eval r
+-- eval (Mul l r) = eval l * eval r
 
 -- Exercise 2
-evalStr :: String -> Maybe Integer
-evalStr expS = case parseExp Lit Add Mul expS of
-    Nothing -> Nothing
-    Just expr -> Just $ eval expr
+-- evalStr :: String -> Maybe Integer
+-- evalStr expS = case parseExp Lit Add Mul expS of
+--     Nothing -> Nothing
+--    Just expr -> Just $ eval expr
 
 -- Exercise 3
 class Expr a where
@@ -21,10 +24,10 @@ class Expr a where
     mul :: a -> a -> a
 
 
-instance Expr ExprT where    
-    lit = Lit
-    add  = Add
-    mul = Mul
+-- instance Expr ExprT where
+--     lit = Lit
+--     add  = Add
+--    mul = Mul
 
 
 -- Exercise 4
@@ -65,8 +68,32 @@ instance Expr Mod7 where
 -- testing
 testExp :: Expr a => Maybe a
 testExp = parseExp lit add mul "(3 * -4) + 5"
+-- add (lit 1) (lit 3)"
+-- mul (add (lit 3) (lit 4)) (lit 6)
 
 testInteger = testExp :: Maybe Integer
 testBool    = testExp :: Maybe Bool
 testMm      = testExp :: Maybe MinMax
 testSat     = testExp :: Maybe Mod7
+
+-- Exercise 5
+instance Expr Program where
+  lit :: Integer -> Program
+  lit = (: []) . PushI
+
+  add :: Program -> Program -> Program
+  add l r = l ++ r ++ [Add]
+
+  mul :: Program -> Program -> Program
+  mul l r = l ++ r ++ [Mul]
+
+
+compile :: String -> Maybe Program
+compile = parseExp lit add mul
+
+-- testing
+testCPU :: Maybe Program ->  Either String StackVal
+testCPU Nothing = Left "Error in program input"
+testCPU (Just p) = stackVM p
+
+testProg = testCPU $ compile "(3 * -4) + 12"
