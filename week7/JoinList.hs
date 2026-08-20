@@ -19,24 +19,11 @@ instance Num a => Monoid (Product a) where
 
 
 -- Exercise 1
--- TODO: Change this to balanced tree usinng AVL
--- (+++) :: Monoid m => JoinList m a -> JoinList m a -> JoinList m a
--- (+++) jl1 jl2 = Append (tag1 <> tag2) jl1 jl2
---     where tag1 = tag jl1
---          tag2 = tag jl2
+(+++) :: Monoid m => JoinList m a -> JoinList m a -> JoinList m a
+(+++) jl1 jl2 = Append (tag1 <> tag2) jl1 jl2
+       where tag1 = tag jl1
+             tag2 = tag jl2
 
-(+++) :: (Monoid m, Ord m) => JoinList m a -> JoinList m a -> JoinList m a
-(+++) Empty jl2 = jl2
-(+++) p@(Single m _) jl2 = Append (m <> tag jl2) p jl2
-(+++) p@(Append m (Single _ _) (Single _ _)) jl2 = Append (m <> tag jl2) p jl2
-(+++) (Append m a b) jl2  = Append m' a' b'
-    where f | tag a < tag b = (a +++ jl2 , b )
-            | tag b < tag a = (a , b +++ jl2)
-            | otherwise     = (a +++ a''', b''' +++ jl2)
-                                where (a''', b''') = prun b
-          prun (Append m'' a'' b'') = (a'', b'')
-          (a', b') = f
-          m' = tag a' <> tag b'          
 
 tag :: Monoid m => JoinList m a -> m
 tag Empty = mempty
@@ -106,20 +93,23 @@ replaceAtLast l (Single (m1, m2) a) = Single (scoreString l, Size 1) l
 replaceAtLast l (Append m a b) = Append (tag a <> tag r') a r'
   where r' = replaceAtLast l b
 
-instance Eq (Score, Size) where
-  (a1, b1)  == (a2,b2) = b1 == b2
 
-instance Ord (Score, Size) where
-  compare (a1, b1) (a2, b2) = compare b1 b2
-
+buildbalanced :: [String] -> JoinList (Score, Size) String
+buildbalanced []   = Empty
+buildbalanced [x]  = scoreSize x
+buildbalanced xs   = left +++ right
+  where (lxs, rxs) = splitAt (length xs `div` 2) xs
+        left       = buildbalanced lxs
+        right      = buildbalanced rxs
 
 instance Buffer (JoinList (Score, Size) String) where
   toString Empty = ""
   toString (Single _ a) = a
   toString (Append _ a b) = toString a ++ "\n" ++ toString b
 
+
   fromString :: String -> JoinList (Score, Size) String
-  fromString s = foldl (\jl a -> jl +++ scoreSize a) Empty $ lines s
+  fromString s = buildbalanced $ lines s
 
   line = indexJ
 
@@ -134,5 +124,9 @@ instance Buffer (JoinList (Score, Size) String) where
   replaceLine n l jl = jl' +++ dropJ (n+1) jl
     where njl = takeJ (n+1) jl
           jl' = if n >= numLines njl then njl else replaceAtLast l njl
+
+t1 = fromString "a\nb\nc\nd\ne\nf\ng\nh\ni\nj" :: JoinList (Score, Size) String          
             
-t = fromString "saiyam\nis\nbebba\nlover\nand\nhe\nis\nbebba\nnine\nten" :: JoinList (Score, Size) String
+t = fromString "a\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk" :: JoinList (Score, Size) String
+
+t2 = fromString "tsest\nhello\ngoo" :: JoinList (Score, Size) String
