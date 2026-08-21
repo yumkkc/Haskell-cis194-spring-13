@@ -3,6 +3,7 @@
 module Party where
 import Employee
 import Data.Tree
+import Data.List
 
 -- 1
 glCons :: Employee -> GuestList -> GuestList
@@ -40,6 +41,10 @@ mostFunGl = moreFun gl3 gl4
 treeFold :: Monoid b => (a -> b -> b) -> Tree a -> b
 treeFold f (Node a tr) = f a $ foldr (\nt -> (<> treeFold f nt)) mempty tr
 
+
+treeFold' :: Monoid b => (a -> [b] -> b) -> Tree a -> b
+treeFold' f (Node a tr) = f a $ foldr (\nt ex -> treeFold' f nt : ex) mempty tr
+
 -- test of treeFold
 instance Semigroup Fun where
   (<>) = (+)
@@ -47,8 +52,30 @@ instance Monoid Fun where
   mempty = 0
 
 sumFun = treeFold (\e -> (+ empFun e)) testCompany2
-glTest = treeFold (glCons) testCompany2
+glTest = treeFold glCons testCompany2
 
 -- the above, treeFold (glCons) testCompany2 works because in this case
 -- b in (a -> b -> b) is a GuestList which is already a monoid
 -- so in foldr which doing '<>' it uses its monoid and its mempty which is just "GL 0 []"
+nextLevel :: Employee -> [(GuestList, GuestList)] -> (GuestList, GuestList)
+nextLevel emp gls = (glCons emp empOnly, mixEmps)
+  where empOnly = foldr (\(_,y) acc -> y <> acc) mempty gls
+        mixEmps = foldr (\(x,y) acc -> moreFun x y <> acc) mempty gls
+
+
+maxFun :: Tree Employee -> GuestList
+maxFun = uncurry moreFun . treeFold' nextLevel
+
+printGuestList :: GuestList -> String
+printGuestList (GL emlist score) = unlines ( scoreStr : sort names)
+  where names = map empName emlist
+        scoreStr = "Total fun: " ++ show score
+
+
+-- Exercise 5
+main :: IO ()
+main = readFile "company.txt"
+       >>= return . read
+       >>= return . maxFun
+       >>= return . printGuestList
+       >>= putStrLn
